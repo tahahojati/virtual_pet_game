@@ -16,6 +16,8 @@ var GameState = {
     },
     create: function(){
         this.background = this.game.add.sprite(0, 0, 'backyard');
+        this.background.inputEnabled = true; 
+        this.background.events.onInputDown.add(this.placeItem, this);
         this.pet = this.game.add.sprite(100, 400, 'pet');
         this.pet.anchor.setTo(0.5); 
         this.pet.customParams = {health: 100, fun: 100};
@@ -33,6 +35,7 @@ var GameState = {
             else x.events.onInputDown.add(self.rotatePet, self);
         });
         this.selected = null; 
+        this.uiBlocked = false;
         this.apple.customParams = {health: 20};
         this.candy.customParams = {health: -10, fun:10};
         this.toy.customParams = {fun: 20};
@@ -42,11 +45,42 @@ var GameState = {
         this.pet.input.enableDrag();
     },    
     pickItem: function(sprite, event){
-        
+        if(this.uiBlocked)
+            return false;
+        this.clearSelection();
+        this.selectedItem = sprite; 
+        sprite.alpha = 0.4; 
     },
     
     rotatePet: function(sprite, event){
+        if(this.uiBlocked)
+            return false;
+        this.uiBlocked = true;
+        sprite.alpha = 0.4;
+        var petRotation = this.game.add.tween(this.pet);
+        petRotation.to({angle: '+720'}, 1000); 
+        petRotation.onComplete.add(function(){
+            this.uiBlocked = false;
+            this.pet.customParams.fun += 10 ; 
+            sprite.alpha = 1;
+        }, this);
+        petRotation.start();
+        this.clearSelection();
         
+    },
+    clearSelection: function(){
+        this.buttons.forEach(function(x){x.alpha =1; });
+        this.selectedItem = null; 
+    },
+    placeItem: function(sprite, event){
+        if(this.uiBlocked || !this.selectedItem){
+            return false;
+        }
+        var x = event.position.x; 
+        var y = event.position.y;
+        var newItem = this.game.add.sprite(x,y, this.selectedItem.key);
+        newItem.anchor.setTo(0.5);
+        newItem.customParams = this.selectedItem.customParams; 
     },
 };
 
