@@ -45,7 +45,28 @@ var GameState = {
         
         this.pet.inputEnabled = true;
         this.pet.input.enableDrag();
+        
+        var style = {font: '20px Arial' , fill: '#fff'};
+        this.game.add.text(10,20, 'Health', style);
+        this.game.add.text(140, 20, 'Fun', style); 
+        
+        this.healthText = this.game.add.text(80,20, '', style);
+        this.funText = this.game.add.text(185, 20, '', style);
+        this.refreshStats(); 
+        
+        //reduce the stats every 5 seconds
+        this.statsReducer = this.time.events.loop(Phaser.Timer.SECOND * 5, this.reduceProperties, this);
+        
     },    
+    reduceProperties: function(){
+        this.pet.customParams.fun -= 20;
+        this.pet.customParams.health -= 10 ;
+        this.refreshStats(); 
+    }, 
+    refreshStats:function(){
+        this.healthText.text = this.pet.customParams.health; 
+        this.funText.text = this.pet.customParams.fun;
+    },
     pickItem: function(sprite, event){
         if(this.uiBlocked)
             return false;
@@ -64,6 +85,7 @@ var GameState = {
         petRotation.onComplete.add(function(){
             this.uiBlocked = false;
             this.pet.customParams.fun += 10 ; 
+            this.refreshStats();
             sprite.alpha = 1;
         }, this);
         petRotation.start();
@@ -93,10 +115,23 @@ var GameState = {
                     this.pet.customParams[stat] += newItem.customParams[stat]; 
                 }
             }
+            this.refreshStats();
             newItem.destroy();
             this.pet.animations.play('funny_faces');
         }, this);
         petMovement.start();
+    },
+    gameOver: function(){
+        console.log
+        this.game.state.restart();
+    },
+    update: function(){
+        if(this.pet.customParams.health <= 0 || this.pet.customParams.fun <= 0 ){
+            this.pet.frame = 4; 
+            this.uiBlocked = true;
+            this.game.time.events.add(2000, this.gameOver, this);
+            
+        }
     },
 };
 
